@@ -9,6 +9,10 @@
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Logic/GoNGymLayout.h"
+#include "Logic/GoNMovementGymCheck.h"
+#include "GoNCharacter.h"
+#include "GoNMovementSettings.h"
+#include "GameFramework/PlayerController.h"
 #include "Modules/ModuleManager.h"
 
 DEFINE_LOG_CATEGORY(LogGoNBlockout);
@@ -63,6 +67,48 @@ namespace GoNBlockoutCommandsDetail
 				++Count;
 			}
 			UE_LOG(LogGoNBlockout, Display, TEXT("GoN Blockout: rebuilt %d gym builder(s)"), Count);
+		}));
+
+	FAutoConsoleCommandWithWorldAndArgs CharMetricsCommand(
+		TEXT("gon.char.metrics"),
+		TEXT("GoN Character: compare the player's movement settings (or the defaults) with the gym metrics: vault/climb heights, steps, slopes, doors, capsule."),
+		FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
+		{
+			GoN::Character::FMovementMetrics Movement = GetDefault<UGoNMovementSettings>()->Metrics.ToPure();
+			FString MovementSource = TEXT("UGoNMovementSettings defaults");
+			GoN::Blockout::FGymMetrics Gym;
+			FString GymSource = TEXT("default gym metrics");
+			if (World != nullptr)
+			{
+				const APlayerController* PlayerController = World->GetFirstPlayerController();
+				if (const AGoNCharacter* Character = PlayerController ? Cast<AGoNCharacter>(PlayerController->GetPawn()) : nullptr)
+				{
+					Movement = Character->GetMetrics();
+					MovementSource = Character->GetName();
+				}
+				for (TActorIterator<AGoNGymBuilder> It(World); It; ++It)
+				{
+					Gym = It->GetPureMetrics();
+					GymSource = It->GetName();
+					break;
+				}
+			}
+			UE_LOG(LogGoNBlockout, Display, TEXT("GoN Character: metrics of %s vs %s"), *MovementSource, *GymSource);
+			const std::vector<GoN::Blockout::FMetricCheck> Checks = GoN::Blockout::CompareMovementWithGym(Movement, Gym);
+			for (const GoN::Blockout::FMetricCheck& Check : Checks)
+			{
+				const FString Text = GoN::ToFString(Check.Text);
+				switch (Check.Result)
+				{
+				case GoN::Blockout::EMetricResult::Ok: UE_LOG(LogGoNBlockout, Display, TEXT("GoN Character:   ok    %s"), *Text); break;
+				case GoN::Blockout::EMetricResult::Note: UE_LOG(LogGoNBlockout, Display, TEXT("GoN Character:   note  %s"), *Text); break;
+				case GoN::Blockout::EMetricResult::Fail: UE_LOG(LogGoNBlockout, Warning, TEXT("GoN Character:   FAIL  %s"), *Text); break;
+				}
+			}
+			UE_LOG(LogGoNBlockout, Display, TEXT("GoN Character: %d ok, %d notes, %d failed"),
+				GoN::Blockout::CountResults(Checks, GoN::Blockout::EMetricResult::Ok),
+				GoN::Blockout::CountResults(Checks, GoN::Blockout::EMetricResult::Note),
+				GoN::Blockout::CountResults(Checks, GoN::Blockout::EMetricResult::Fail));
 		}));
 
 	FAutoConsoleCommand ValidateGymCommand(

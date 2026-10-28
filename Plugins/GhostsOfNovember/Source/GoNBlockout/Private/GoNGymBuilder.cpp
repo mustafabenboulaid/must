@@ -182,3 +182,23 @@ FTransform AGoNGymBuilder::GetPlayerStartTransform() const
 	const FTransform Local(FRotator(0.0f, PlayerStartYaw, 0.0f), PlayerStartLocal);
 	return Local * GetActorTransform();
 }
+
+GoN::Blockout::FGymMetrics AGoNGymBuilder::GetPureMetrics() const
+{
+	return GoNGymBuilderDetail::ToPure(Metrics);
+}
+
+FBox AGoNGymBuilder::GetLowCoverBounds() const
+{
+	const GoN::Blockout::FGymLayout Layout = GoN::Blockout::BuildGymLayout(GetPureMetrics());
+	for (const GoN::Blockout::FGymBox& Box : Layout.Boxes)
+	{
+		if (Box.Piece == GoN::Blockout::EGymPiece::LowCover)
+		{
+			const FVector Centre = GetActorTransform().TransformPosition(GoNGymBuilderDetail::ToVector(Box.Center));
+			const GoN::Blockout::FVec3 Extent = Box.BoundsExtent();
+			return FBox::BuildAABB(Centre, FVector(Extent.X, Extent.Y, Extent.Z));
+		}
+	}
+	return FBox(ForceInit);
+}

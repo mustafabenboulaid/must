@@ -1,7 +1,6 @@
 #include "GoNCharacterLog.h"
 
 #include "GoNBuildInfo.h"
-#include "HAL/IConsoleManager.h"
 #include "Modules/ModuleManager.h"
 
 DEFINE_LOG_CATEGORY(LogGoNCharacter);
@@ -23,10 +22,5 @@ public:
 
 IMPLEMENT_MODULE(FGoNCharacterModule, GoNCharacter);
 
-static FAutoConsoleCommand GGoNCharacterStatusCommand(
-	TEXT("gon.character.status"),
-	TEXT("GoN Character: print module status."),
-	FConsoleCommandDelegate::CreateLambda([]()
-	{
-		UE_LOG(LogGoNCharacter, Display, TEXT("GoN Character: skeleton module; systems arrive in their milestone (M2)."));
-	}));
+// gon.char.debug is a console variable in GoNCharacter.cpp; gon.char.metrics lives in GoNBlockout
+// (it compares against the gym metrics, and GoNBlockout depends on GoNCharacter).

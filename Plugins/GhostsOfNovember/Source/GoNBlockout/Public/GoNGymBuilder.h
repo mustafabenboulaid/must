@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Logic/GoNGymLayout.h"
 
 #include "GoNGymBuilder.generated.h"
 
@@ -75,6 +76,11 @@ public:
 
 	// Capsule-centre spawn point and facing, in world space.
 	FTransform GetPlayerStartTransform() const;
+
+	GoN::Blockout::FGymMetrics GetPureMetrics() const;
+
+	// World-space centre and size of the first low-cover block (the gym narrative trigger).
+	FBox GetLowCoverBounds() const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GoN|Gym")
 	FGoNGymMetrics Metrics;

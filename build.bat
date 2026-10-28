@@ -2,10 +2,10 @@
 setlocal
 rem Ghosts of November - full editor build (brief section 8).
 rem Close the editor first: header changes + Live Coding crashed the prototype and ran stale code.
-rem   UE_ROOT      default "C:\Program Files\Epic Games\UE_5.7"
+rem   UE_ROOT      default "J:\Unreal Multi\Editor\UE_5.7"
 rem   GON_PROJECT  default: the .uproject next to this file
 
-if "%UE_ROOT%"=="" set "UE_ROOT=C:\Program Files\Epic Games\UE_5.7"
+if "%UE_ROOT%"=="" set "UE_ROOT=J:\Unreal Multi\Editor\UE_5.7"
 if "%GON_PROJECT%"=="" for %%f in ("%~dp0*.uproject") do set "GON_PROJECT=%%~ff"
 if "%GON_PROJECT%"=="" (
   echo No .uproject next to build.bat. Set GON_PROJECT=C:\path\MyProject2.uproject

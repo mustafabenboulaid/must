@@ -1,13 +1,60 @@
 {
   "schema": 1,
   "note": "Regions follow the five zones of 1 November 1954. Fictional places are composites and say so.",
-  "regions": ["aures", "north_constantine", "kabylie", "algerois", "oranie", "test"],
+  "regions": [
+    "aures",
+    "north_constantine",
+    "kabylie",
+    "algerois",
+    "oranie",
+    "test"
+  ],
   "places": [
-    { "id": "aures_mountains", "region": "aures", "nameAr": "جبال الأوراس", "nameLatin": "Aurès mountains" },
-    { "id": "aures_douar", "region": "aures", "nameAr": "دوار في الأوراس (مكان مركّب)", "nameLatin": "Aurès douar (composite)", "fictional": true },
-    { "id": "town_composite", "region": "aures", "nameAr": "البلدة (مكان مركّب، اسم مؤقت)", "nameLatin": "Composite town (placeholder name)", "fictional": true, "note": "Fictional composite town of M-B: gendarmerie, power station, police post (ui/briefing/briefing.html)." },
-    { "id": "north_constantine_hills", "region": "north_constantine", "nameAr": "الشمال القسنطيني", "nameLatin": "North Constantine" },
-    { "id": "oranie_west", "region": "oranie", "nameAr": "الغرب الوهراني", "nameLatin": "Oranie" },
-    { "id": "gym", "region": "test", "nameAr": "صالة الاختبار", "nameLatin": "Test gym", "fictional": true }
+    {
+      "id": "aures_mountains",
+      "region": "aures",
+      "nameAr": "جبال الأوراس",
+      "nameLatin": "Aurès mountains"
+    },
+    {
+      "id": "aures_douar",
+      "region": "aures",
+      "nameAr": "دوار في الأوراس (مكان مركّب)",
+      "nameLatin": "Aurès douar (composite)",
+      "fictional": true
+    },
+    {
+      "id": "town_composite",
+      "region": "aures",
+      "nameAr": "البلدة (مكان مركّب، اسم مؤقت)",
+      "nameLatin": "Composite town (placeholder name)",
+      "fictional": true,
+      "note": "Fictional composite town of M-B: gendarmerie, power station, police post (ui/briefing/briefing.html)."
+    },
+    {
+      "id": "north_constantine_hills",
+      "region": "north_constantine",
+      "nameAr": "الشمال القسنطيني",
+      "nameLatin": "North Constantine"
+    },
+    {
+      "id": "algiers",
+      "region": "algerois",
+      "nameAr": "الجزائر العاصمة",
+      "nameLatin": "Algiers"
+    },
+    {
+      "id": "oranie_west",
+      "region": "oranie",
+      "nameAr": "الغرب الوهراني",
+      "nameLatin": "Oranie"
+    },
+    {
+      "id": "gym",
+      "region": "test",
+      "nameAr": "صالة الاختبار",
+      "nameLatin": "Test gym",
+      "fictional": true
+    }
   ]
 }

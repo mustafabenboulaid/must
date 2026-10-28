@@ -7,7 +7,7 @@
     "en": "The First of November"
   },
   "design": {
-    "visibleGoal": "تنفيذ مهمة الفوج المختار في البلدة ثم الالتحاق بنقطة التجمع قبل الفجر.",
+    "visibleGoal": "الفوج المختار (مقاتلون خياليون) ينفّذ مهمته في البلدة ثم يلتحق بنقطة التجمع قبل الفجر؛ بن بولعيد يقدّم الإحاطة فقط.",
     "dramaticGoal": "إظهار أن العمليات بدأت في مناطق متعددة لا في موقع واحد، بموارد قليلة.",
     "obstacle": "سلاح نادر، تنسيق بين ثلاثة أفواج، ووقت ضيق.",
     "decision": "اختيار الفوج (الدرك، محطة الكهرباء، الشرطة).",
@@ -17,12 +17,49 @@
   "timeline": {
     "from": "1954-10-31",
     "to": "1954-11-01",
-    "place": "town_composite",
-    "characters": [
-      "ben_boulaid",
-      "fic_aures_fighter_01",
-      "fic_aures_fighter_02",
-      "fic_aures_fighter_03"
+    "place": "aures_mountains",
+    "characters": [],
+    "note": "Ben Boulaïd only gives the briefing (segment 'briefing'); the action is carried out by the fictional group (segments 'action' and 'rally').",
+    "segments": [
+      {
+        "id": "briefing",
+        "from": "1954-10-31",
+        "to": "1954-10-31",
+        "place": "aures_mountains",
+        "characters": [
+          "ben_boulaid",
+          "fic_aures_fighter_01",
+          "fic_aures_fighter_02",
+          "fic_aures_fighter_03"
+        ],
+        "pov": "fic_aures_fighter_01",
+        "note": "Tactical briefing (ui/briefing/briefing.html). His lines are dramatized."
+      },
+      {
+        "id": "action",
+        "from": "1954-10-31",
+        "to": "1954-11-01",
+        "place": "town_composite",
+        "characters": [
+          "fic_aures_fighter_01",
+          "fic_aures_fighter_02",
+          "fic_aures_fighter_03"
+        ],
+        "pov": "fic_aures_fighter_01",
+        "note": "The chosen group's operation in the fictional composite town. No historical figure takes part."
+      },
+      {
+        "id": "rally",
+        "from": "1954-11-01",
+        "to": "1954-11-01",
+        "place": "aures_mountains",
+        "characters": [
+          "fic_aures_fighter_01",
+          "fic_aures_fighter_02",
+          "fic_aures_fighter_03"
+        ],
+        "pov": "fic_aures_fighter_01"
+      }
     ]
   },
   "startBeat": "briefing",
@@ -123,7 +160,8 @@
         "mb_bb_10"
       ],
       "completeOn": "briefing.start_operation",
-      "next": "intercut"
+      "next": "intercut",
+      "segment": "briefing"
     },
     {
       "id": "intercut",
@@ -155,7 +193,8 @@
           "next": "g2_approach"
         }
       ],
-      "else": "g3_approach"
+      "else": "g3_approach",
+      "segment": "briefing"
     },
     {
       "id": "g1_approach",
@@ -164,7 +203,8 @@
         "ar": "الفوج الأول: اقترب من مركز الدرك"
       },
       "completeOn": "mb.g1.in_position",
-      "next": "g1_action"
+      "next": "g1_action",
+      "segment": "action"
     },
     {
       "id": "g1_action",
@@ -185,7 +225,8 @@
           "value": 20
         }
       ],
-      "next": "cp_after_action"
+      "next": "cp_after_action",
+      "segment": "action"
     },
     {
       "id": "g2_approach",
@@ -194,7 +235,8 @@
         "ar": "الفوج الثاني: اقترب من محطة الكهرباء"
       },
       "completeOn": "mb.g2.in_position",
-      "next": "g2_action"
+      "next": "g2_action",
+      "segment": "action"
     },
     {
       "id": "g2_action",
@@ -214,7 +256,8 @@
           "value": 15
         }
       ],
-      "next": "cp_after_action"
+      "next": "cp_after_action",
+      "segment": "action"
     },
     {
       "id": "g3_approach",
@@ -223,7 +266,8 @@
         "ar": "الفوج الثالث: اقترب من مركز الشرطة"
       },
       "completeOn": "mb.g3.in_position",
-      "next": "g3_action"
+      "next": "g3_action",
+      "segment": "action"
     },
     {
       "id": "g3_action",
@@ -239,12 +283,14 @@
           "value": 25
         }
       ],
-      "next": "cp_after_action"
+      "next": "cp_after_action",
+      "segment": "action"
     },
     {
       "id": "cp_after_action",
       "type": "checkpoint",
-      "next": "network_reports"
+      "next": "network_reports",
+      "segment": "action"
     },
     {
       "id": "network_reports",
@@ -252,7 +298,8 @@
       "lines": [
         "mb_net_1"
       ],
-      "next": "rally"
+      "next": "rally",
+      "segment": "action"
     },
     {
       "id": "rally",
@@ -261,12 +308,14 @@
         "ar": "الالتحاق بنقطة التجمع في الجبل قبل الفجر"
       },
       "completeOn": "mb.rally_reached",
-      "next": "end"
+      "next": "end",
+      "segment": "rally"
     },
     {
       "id": "end",
       "type": "end",
-      "outcome": "success"
+      "outcome": "success",
+      "segment": "rally"
     }
   ]
 }

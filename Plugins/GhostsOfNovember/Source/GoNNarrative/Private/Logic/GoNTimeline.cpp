@@ -22,6 +22,22 @@ namespace GoN::Narrative
 			return Out;
 		}
 
+		std::string EntryContext(const FMission& Mission, const FTimelineEntry& Entry)
+		{
+			return Entry.Id.empty() ? Mission.Id : Mission.Id + "/segment:" + Entry.Id;
+		}
+
+		// The mission-level entry first, then every segment.
+		std::vector<const FTimelineEntry*> Entries(const FMission& Mission)
+		{
+			std::vector<const FTimelineEntry*> Out{&Mission.Timeline};
+			for (const FTimelineEntry& Segment : Mission.Segments)
+			{
+				Out.push_back(&Segment);
+			}
+			return Out;
+		}
+
 		void CheckSourceIds(const FCampaign& Campaign, const std::vector<std::string>& SourceIds, const std::string& Context, FIssueList& Issues)
 		{
 			for (const std::string& SourceId : SourceIds)
@@ -33,9 +49,9 @@ namespace GoN::Narrative
 			}
 		}
 
-		void CheckCharacterInMission(const FMission& Mission, const FPlace* Place, const FCharacter& Character, FIssueList& Issues)
+		void CheckCharacterInEntry(const FMission& Mission, const FTimelineEntry& Entry, const FPlace* Place, const FCharacter& Character, FIssueList& Issues)
 		{
-			const std::string Ctx = Mission.Id + "/" + Character.Id;
+			const std::string Ctx = EntryContext(Mission, Entry) + "/" + Character.Id;
 			if (Character.bExcluded)
 			{
 				Issues.Add(ESeverity::Error, "history.excluded", Ctx, Character.NameLatin + " must not appear: " + Character.ExcludedReason);
@@ -49,16 +65,16 @@ namespace GoN::Narrative
 				return;
 			}
 
-			const FDateRange& Dates = Mission.Timeline.Dates;
+			const FDateRange& Dates = Entry.Dates;
 			if (Character.bHasDeath)
 			{
 				if (Dates.To > Character.Death.To)
 				{
-					Issues.Add(ESeverity::Error, "timeline.after_death", Ctx, Character.NameLatin + " died " + (Character.Death.From == Character.Death.To ? Character.Death.From.ToString() : "between " + Character.Death.ToString()) + "; mission runs " + Dates.ToString());
+					Issues.Add(ESeverity::Error, "timeline.after_death", Ctx, Character.NameLatin + " died " + (Character.Death.From == Character.Death.To ? Character.Death.From.ToString() : "between " + Character.Death.ToString()) + "; entry runs " + Dates.ToString());
 				}
 				else if (Character.Death.From < Character.Death.To && Dates.To > Character.Death.From)
 				{
-					Issues.Add(ESeverity::Warning, "timeline.death_disputed", Ctx, "mission " + Dates.ToString() + " reaches the disputed death window " + Character.Death.ToString() + "; the historical consultant must decide");
+					Issues.Add(ESeverity::Warning, "timeline.death_disputed", Ctx, "entry " + Dates.ToString() + " reaches the disputed death window " + Character.Death.ToString() + "; the historical consultant must decide");
 				}
 			}
 
@@ -81,11 +97,76 @@ namespace GoN::Narrative
 				Issues.Add(ESeverity::Error, "history.region", Ctx, Character.NameLatin + " is not documented in region '" + Place->Region + "' during " + Dates.ToString() + " (documented: " + DescribePresence(Character) + ")");
 			}
 		}
+
+		void CheckEntry(const FCampaign& Campaign, const FMission& Mission, const FTimelineEntry& Entry, FIssueList& Issues)
+		{
+			const std::string Ctx = EntryContext(Mission, Entry);
+			const FPlace* Place = Campaign.FindPlace(Entry.PlaceId);
+			if (Place == nullptr && !Entry.PlaceId.empty())
+			{
+				Issues.Add(ESeverity::Error, "timeline.place_unknown", Ctx, "place '" + Entry.PlaceId + "' is not in places.json");
+			}
+			if (!Entry.Id.empty() && !Mission.Timeline.Dates.Contains(Entry.Dates))
+			{
+				Issues.Add(ESeverity::Error, "timeline.segment_outside", Ctx, "segment " + Entry.Dates.ToString() + " is outside the mission's dates " + Mission.Timeline.Dates.ToString());
+			}
+			if (!Entry.PovCharacterId.empty() && !Contains(Entry.CharacterIds, Entry.PovCharacterId))
+			{
+				Issues.Add(ESeverity::Error, "timeline.pov_absent", Ctx, "POV character '" + Entry.PovCharacterId + "' is not listed as present");
+			}
+			std::set<std::string> Seen;
+			for (const std::string& CharacterId : Entry.CharacterIds)
+			{
+				if (!Seen.insert(CharacterId).second)
+				{
+					Issues.Add(ESeverity::Warning, "timeline.character_twice", Ctx, "character '" + CharacterId + "' is listed twice");
+					continue;
+				}
+				const FCharacter* Character = Campaign.FindCharacter(CharacterId);
+				if (Character == nullptr)
+				{
+					Issues.Add(ESeverity::Error, "timeline.character_unknown", Ctx, "character '" + CharacterId + "' is not in characters.json");
+					continue;
+				}
+				CheckCharacterInEntry(Mission, Entry, Place, *Character, Issues);
+			}
+		}
+
+		void CheckLinePresence(const FMission& Mission, const FDialogueLine& Line, const FTimelineEntry& Entry, FIssueList& Issues)
+		{
+			if (!Line.bRemote && !Contains(Entry.CharacterIds, Line.SpeakerId))
+			{
+				Issues.Add(ESeverity::Error, "dialogue.speaker_absent", Mission.Id + "/line:" + Line.Id, "speaker '" + Line.SpeakerId + "' is not present in " + (Entry.Id.empty() ? std::string("the mission timeline") : "segment '" + Entry.Id + "'") + " (use \"remote\": true for radio/network voices)");
+			}
+		}
 	} // namespace TimelineDetail
 
 	void ValidateDialogue(const FCampaign& Campaign, const FMission& Mission, FIssueList& Issues)
 	{
+		using namespace TimelineDetail;
 		static const char* const KnownLanguages[] = {"ar-dz", "ar", "fr", "tzm", "en"};
+
+		// Which timeline entries each line is spoken in (through the dialogue beats that use it).
+		std::set<std::string> ReferencedLines;
+		for (const FBeat& Beat : Mission.Beats)
+		{
+			if (Beat.Type != EBeatType::Dialogue)
+			{
+				continue;
+			}
+			const FTimelineEntry* Entry = Mission.FindTimelineEntry(Beat.Segment);
+			for (const std::string& LineId : Beat.LineIds)
+			{
+				const FDialogueLine* Line = Mission.FindLine(LineId);
+				if (Line == nullptr || Entry == nullptr)
+				{
+					continue; // reported by the graph / segment checks
+				}
+				ReferencedLines.insert(LineId);
+				CheckLinePresence(Mission, *Line, *Entry, Issues);
+			}
+		}
+
 		for (const FDialogueLine& Line : Mission.Lines)
 		{
 			const std::string Ctx = Mission.Id + "/line:" + Line.Id;
@@ -111,9 +192,18 @@ namespace GoN::Narrative
 			{
 				Issues.Add(ESeverity::Error, "source.unknown", Ctx, "source '" + Line.SourceId + "' is not in sources.json");
 			}
-			if (!Line.bRemote && !TimelineDetail::Contains(Mission.Timeline.CharacterIds, Line.SpeakerId))
+			if (ReferencedLines.count(Line.Id) == 0 && !Line.bRemote)
 			{
-				Issues.Add(ESeverity::Error, "dialogue.speaker_absent", Ctx, "speaker '" + Line.SpeakerId + "' is not present in the mission timeline (use \"remote\": true for radio/network voices)");
+				// Not used by any beat yet: the speaker must at least be present somewhere in the mission.
+				bool bPresent = false;
+				for (const FTimelineEntry* Entry : Entries(Mission))
+				{
+					bPresent = bPresent || Contains(Entry->CharacterIds, Line.SpeakerId);
+				}
+				if (!bPresent)
+				{
+					CheckLinePresence(Mission, Line, Mission.Timeline, Issues);
+				}
 			}
 			bool bKnownLanguage = false;
 			for (const char* Language : KnownLanguages)
@@ -138,69 +228,90 @@ namespace GoN::Narrative
 		for (const auto& Pair : Campaign.Characters)
 		{
 			const FCharacter& Character = Pair.second;
-			CheckSourceIds(Campaign, Character.DeathSourceIds, "characters.json/" + Character.Id + "/death", Issues);
-			for (const FPresenceWindow& Window : Character.Presence)
+			const std::string Ctx = "characters.json/" + Character.Id;
+			CheckSourceIds(Campaign, Character.DeathSourceIds, Ctx + "/death", Issues);
+			for (size_t A = 0; A < Character.Presence.size(); ++A)
 			{
-				CheckSourceIds(Campaign, Window.SourceIds, "characters.json/" + Character.Id + "/presence", Issues);
+				CheckSourceIds(Campaign, Character.Presence[A].SourceIds, Ctx + "/presence", Issues);
+				for (size_t B = A + 1; B < Character.Presence.size(); ++B)
+				{
+					const FPresenceWindow& First = Character.Presence[A];
+					const FPresenceWindow& Second = Character.Presence[B];
+					if (First.Region != Second.Region && First.Dates.Overlaps(Second.Dates))
+					{
+						Issues.Add(ESeverity::Error, "history.presence_overlap", Ctx, "documented in '" + First.Region + "' " + First.Dates.ToString() + " and '" + Second.Region + "' " + Second.Dates.ToString() + " at the same time");
+					}
+				}
 			}
 			if (!Character.bHistorical && !Character.Presence.empty())
 			{
-				Issues.Add(ESeverity::Warning, "character.fictional_presence", "characters.json/" + Character.Id, "presence windows are only checked for historical characters");
+				Issues.Add(ESeverity::Warning, "character.fictional_presence", Ctx, "presence windows are only checked for historical characters");
 			}
 		}
 
 		for (const FMission& Mission : Campaign.Missions)
 		{
-			const FPlace* Place = Campaign.FindPlace(Mission.Timeline.PlaceId);
-			if (Place == nullptr && !Mission.Timeline.PlaceId.empty())
+			std::set<std::string> SegmentIds;
+			for (const FTimelineEntry& Segment : Mission.Segments)
 			{
-				Issues.Add(ESeverity::Error, "timeline.place_unknown", Mission.Id, "place '" + Mission.Timeline.PlaceId + "' is not in places.json");
+				if (Segment.Id.empty() || !SegmentIds.insert(Segment.Id).second)
+				{
+					Issues.Add(ESeverity::Error, "timeline.segment_id", Mission.Id, "segment id '" + Segment.Id + "' is empty or duplicated");
+				}
 			}
-			std::set<std::string> Seen;
-			for (const std::string& CharacterId : Mission.Timeline.CharacterIds)
+			for (const FBeat& Beat : Mission.Beats)
 			{
-				if (!Seen.insert(CharacterId).second)
+				if (Mission.FindTimelineEntry(Beat.Segment) == nullptr)
 				{
-					Issues.Add(ESeverity::Warning, "timeline.character_twice", Mission.Id, "character '" + CharacterId + "' is listed twice");
-					continue;
+					Issues.Add(ESeverity::Error, "timeline.segment_unknown", Mission.Id + "/" + Beat.Id, "beat uses unknown segment '" + Beat.Segment + "'");
 				}
-				const FCharacter* Character = Campaign.FindCharacter(CharacterId);
-				if (Character == nullptr)
-				{
-					Issues.Add(ESeverity::Error, "timeline.character_unknown", Mission.Id, "character '" + CharacterId + "' is not in characters.json");
-					continue;
-				}
-				CheckCharacterInMission(Mission, Place, *Character, Issues);
+			}
+			for (const FTimelineEntry* Entry : Entries(Mission))
+			{
+				CheckEntry(Campaign, Mission, *Entry, Issues);
 			}
 			ValidateDialogue(Campaign, Mission, Issues);
 		}
 
-		// Nobody (historical or fictional) is in two regions at once.
-		for (size_t A = 0; A < Campaign.Missions.size(); ++A)
+		// Nobody (historical or fictional) is in two regions at once. A mission's own entries are
+		// compared with each other too (segments), but not with the mission-level summary entry.
+		struct FPlacedEntry
 		{
-			const FMission& First = Campaign.Missions[A];
-			const FPlace* FirstPlace = Campaign.FindPlace(First.Timeline.PlaceId);
-			if (First.bTestOnly || FirstPlace == nullptr)
+			const FMission* Mission;
+			const FTimelineEntry* Entry;
+			const FPlace* Place;
+		};
+		std::vector<FPlacedEntry> Placed;
+		for (const FMission& Mission : Campaign.Missions)
+		{
+			if (Mission.bTestOnly)
 			{
 				continue;
 			}
-			for (size_t B = A + 1; B < Campaign.Missions.size(); ++B)
+			for (const FTimelineEntry* Entry : Entries(Mission))
 			{
-				const FMission& Second = Campaign.Missions[B];
-				const FPlace* SecondPlace = Campaign.FindPlace(Second.Timeline.PlaceId);
-				if (Second.bTestOnly || SecondPlace == nullptr || FirstPlace->Region == SecondPlace->Region)
+				if (const FPlace* Place = Campaign.FindPlace(Entry->PlaceId))
+				{
+					Placed.push_back(FPlacedEntry{&Mission, Entry, Place});
+				}
+			}
+		}
+		for (size_t A = 0; A < Placed.size(); ++A)
+		{
+			for (size_t B = A + 1; B < Placed.size(); ++B)
+			{
+				const FPlacedEntry& First = Placed[A];
+				const FPlacedEntry& Second = Placed[B];
+				const bool bSameMission = First.Mission == Second.Mission;
+				if ((bSameMission && (First.Entry->Id.empty() || Second.Entry->Id.empty())) || First.Place->Region == Second.Place->Region || !First.Entry->Dates.Overlaps(Second.Entry->Dates))
 				{
 					continue;
 				}
-				if (!First.Timeline.Dates.Overlaps(Second.Timeline.Dates))
+				for (const std::string& CharacterId : First.Entry->CharacterIds)
 				{
-					continue;
-				}
-				for (const std::string& CharacterId : First.Timeline.CharacterIds)
-				{
-					if (Contains(Second.Timeline.CharacterIds, CharacterId))
+					if (Contains(Second.Entry->CharacterIds, CharacterId))
 					{
-						Issues.Add(ESeverity::Error, "timeline.two_places", CharacterId, "in '" + First.Id + "' (" + FirstPlace->Region + ", " + First.Timeline.Dates.ToString() + ") and '" + Second.Id + "' (" + SecondPlace->Region + ", " + Second.Timeline.Dates.ToString() + ") at the same time");
+						Issues.Add(ESeverity::Error, "timeline.two_places", CharacterId, "in '" + EntryContext(*First.Mission, *First.Entry) + "' (" + First.Place->Region + ", " + First.Entry->Dates.ToString() + ") and '" + EntryContext(*Second.Mission, *Second.Entry) + "' (" + Second.Place->Region + ", " + Second.Entry->Dates.ToString() + ") at the same time");
 					}
 				}
 			}

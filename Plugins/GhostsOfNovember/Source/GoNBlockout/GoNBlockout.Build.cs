@@ -6,6 +6,6 @@ public class GoNBlockout : ModuleRules
 	public GoNBlockout(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "GoNCore", "Projects" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "GoNCore", "GoNNarrative", "GoNCharacter", "Projects" });
 	}
 }

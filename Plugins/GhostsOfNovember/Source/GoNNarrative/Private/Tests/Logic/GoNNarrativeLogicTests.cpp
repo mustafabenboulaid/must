@@ -9,6 +9,8 @@
 #include "Logic/GoNNarrativeLoader.h"
 #include "Logic/GoNTimeline.h"
 
+#include <algorithm>
+
 namespace GoNNarrativeLogicTestsDetail
 {
 	using namespace GoN::Narrative;
@@ -433,6 +435,135 @@ GON_LOGIC_TEST("Narrative.Timeline.ExcludedCharacterInMission", Narrative_Timeli
 	FCampaign Campaign = MakeCampaign({TimelineMission("m", "mountains", "1954-11-01", "1954-11-01", R"("nsoumer")")}, Issues);
 	ValidateTimeline(Campaign, Issues);
 	GON_EXPECT(Issues.HasCode("history.excluded"));
+}
+
+GON_LOGIC_TEST("Narrative.Timeline.SegmentsSeparateBriefingFromAction", Narrative_Timeline_Segments)
+{
+	// Ben Boulaid briefs in the mountains; the fictional group acts in the town. Speakers are checked per segment.
+	const std::string Mission = R"({ "id": "seg", "chapter": "c",
+		"design": { "visibleGoal": "v", "dramaticGoal": "d", "obstacle": "o", "decision": "c", "consequence": "q", "transition": "t" },
+		"timeline": { "from": "1954-10-31", "to": "1954-11-01", "place": "mountains", "characters": [],
+			"segments": [
+				{ "id": "briefing", "from": "1954-10-31", "to": "1954-10-31", "place": "mountains", "characters": ["ben_boulaid", "fighter"], "pov": "fighter" },
+				{ "id": "action", "from": "1954-10-31", "to": "1954-11-01", "place": "town", "characters": ["fighter"], "pov": "fighter" } ] },
+		"startBeat": "brief",
+		"lines": [ { "id": "b1", "speaker": "ben_boulaid", "text": "x", "dramatized": true }, { "id": "f1", "speaker": "fighter", "text": "x" } ],
+		"beats": [
+			{ "id": "brief", "type": "dialogue", "segment": "briefing", "lines": ["b1"], "next": "act" },
+			{ "id": "act", "type": "objective", "segment": "action", "next": "talk" },
+			{ "id": "talk", "type": "dialogue", "segment": "action", "lines": ["f1"], "next": "e" },
+			{ "id": "e", "type": "end", "segment": "action" } ] })";
+	FIssueList Issues;
+	FCampaign Campaign = MakeCampaign({Mission}, Issues);
+	ValidateTimeline(Campaign, Issues);
+	GON_EXPECT_EQ(Issues.ErrorCount(), 0);
+
+	// The same line spoken during the action, where he is not present, is rejected.
+	std::string Moved = Mission;
+	Moved.replace(Moved.find("\"lines\": [\"f1\"]"), std::string("\"lines\": [\"f1\"]").size(), "\"lines\": [\"b1\"]");
+	FIssueList MovedIssues;
+	FCampaign MovedCampaign = MakeCampaign({Moved}, MovedIssues);
+	ValidateTimeline(MovedCampaign, MovedIssues);
+	GON_EXPECT(MovedIssues.HasCode("dialogue.speaker_absent"));
+}
+
+GON_LOGIC_TEST("Narrative.Timeline.SegmentErrors", Narrative_Timeline_SegmentErrors)
+{
+	FIssueList Issues;
+	FCampaign Campaign = MakeCampaign({R"({ "id": "bad", "chapter": "c",
+		"timeline": { "from": "1954-10-31", "to": "1954-11-01", "place": "mountains", "characters": [],
+			"segments": [
+				{ "id": "late", "from": "1954-11-01", "to": "1954-11-03", "place": "town", "characters": ["fighter"], "pov": "fighter" },
+				{ "id": "nopov", "from": "1954-10-31", "to": "1954-10-31", "place": "town", "characters": ["fighter"], "pov": "narrator" },
+				{ "id": "late", "from": "1954-10-31", "to": "1954-10-31", "place": "town", "characters": [] } ] },
+		"startBeat": "e", "beats": [ { "id": "e", "type": "end", "segment": "nowhere" } ] })"}, Issues);
+	ValidateTimeline(Campaign, Issues);
+	GON_EXPECT(Issues.HasCode("timeline.segment_outside"));
+	GON_EXPECT(Issues.HasCode("timeline.pov_absent"));
+	GON_EXPECT(Issues.HasCode("timeline.segment_id"));
+	GON_EXPECT(Issues.HasCode("timeline.segment_unknown"));
+}
+
+GON_LOGIC_TEST("Narrative.Timeline.SegmentsInTwoRegionsAtOnce", Narrative_Timeline_SegmentTwoPlaces)
+{
+	FIssueList Issues;
+	FCampaign Campaign = MakeCampaign({R"({ "id": "split", "chapter": "c",
+		"timeline": { "from": "1954-10-31", "to": "1954-11-01", "place": "mountains", "characters": [],
+			"segments": [
+				{ "id": "a", "from": "1954-10-31", "to": "1954-11-01", "place": "town", "characters": ["fighter"] },
+				{ "id": "b", "from": "1954-11-01", "to": "1954-11-01", "place": "oran", "characters": ["fighter"] } ] },
+		"startBeat": "e", "beats": [ { "id": "e", "type": "end" } ] })"}, Issues);
+	ValidateTimeline(Campaign, Issues);
+	GON_EXPECT(Issues.HasCode("timeline.two_places"));
+}
+
+GON_LOGIC_TEST("Narrative.Timeline.PresenceWindowsMustNotOverlap", Narrative_Timeline_PresenceOverlap)
+{
+	FIssueList Issues;
+	FCampaign Campaign;
+	LoadCharacters(R"({ "characters": [ { "id": "x", "nameLatin": "X", "historical": true, "presence": [
+		{ "region": "aures", "from": "1954-10-01", "to": "1954-10-31" },
+		{ "region": "algerois", "from": "1954-10-23", "to": "1954-10-24" } ] } ] })", Campaign.Characters, Issues);
+	ValidateTimeline(Campaign, Issues);
+	GON_EXPECT(Issues.HasCode("history.presence_overlap"));
+}
+
+GON_LOGIC_TEST("Narrative.Data.BenBoulaidOnlyBriefsInFirstNovember", Narrative_Data_BenBoulaidBriefsOnly)
+{
+	const GoN::LogicTest::FDataAccess& Access = GoN::LogicTest::DataAccess();
+	GON_REQUIRE(Access.FileSystem != nullptr);
+	FCampaign Campaign;
+	FIssueList Issues;
+	LoadAndValidateCampaign(*Access.FileSystem, GoN::JoinPath(Access.DataDirectory, "Narrative"), Campaign, Issues);
+	const FMission* Mission = Campaign.FindMission("ch1_mb_first_november");
+	GON_REQUIRE(Mission != nullptr);
+	GON_EXPECT(!Mission->Segments.empty());
+	for (const FBeat& Beat : Mission->Beats)
+	{
+		const FTimelineEntry* Entry = Mission->FindTimelineEntry(Beat.Segment);
+		GON_REQUIRE(Entry != nullptr);
+		const bool bBenPresent = std::find(Entry->CharacterIds.begin(), Entry->CharacterIds.end(), "ben_boulaid") != Entry->CharacterIds.end();
+		if (bBenPresent && Entry->Id != "briefing")
+		{
+			Ctx.Fail(__FILE__, __LINE__, "Ben Boulaid is present in beat '" + Beat.Id + "' outside the briefing");
+		}
+		if (Beat.Type == EBeatType::Objective)
+		{
+			// Every playable action beat is carried by a fictional POV character.
+			const FCharacter* Pov = Campaign.FindCharacter(Entry->PovCharacterId);
+			GON_REQUIRE(Pov != nullptr);
+			GON_EXPECT(!Pov->bHistorical);
+			GON_EXPECT(!bBenPresent);
+		}
+	}
+}
+
+GON_LOGIC_TEST("Narrative.Data.BenBoulaidAtMeetingOfTheSix", Narrative_Data_MeetingOfSix)
+{
+	const GoN::LogicTest::FDataAccess& Access = GoN::LogicTest::DataAccess();
+	GON_REQUIRE(Access.FileSystem != nullptr);
+	FCampaign Campaign;
+	FIssueList LoadIssues;
+	LoadAndValidateCampaign(*Access.FileSystem, GoN::JoinPath(Access.DataDirectory, "Narrative"), Campaign, LoadIssues);
+	GON_REQUIRE(Campaign.FindPlace("algiers") != nullptr);
+
+	const auto ValidateWith = [&Campaign](const std::string& From, const std::string& To)
+	{
+		FCampaign Probe = Campaign;
+		FMission Mission;
+		Mission.Id = "probe";
+		Mission.ChapterId = "probe";
+		GoN::FDate::Parse(From, Mission.Timeline.Dates.From);
+		GoN::FDate::Parse(To, Mission.Timeline.Dates.To);
+		Mission.Timeline.PlaceId = "algiers";
+		Mission.Timeline.CharacterIds = {"ben_boulaid"};
+		Probe.Missions = {Mission};
+		FIssueList Issues;
+		ValidateTimeline(Probe, Issues);
+		return Issues;
+	};
+	GON_EXPECT(!ValidateWith("1954-10-23", "1954-10-24").HasCode("history.region"));
+	GON_EXPECT(ValidateWith("1954-11-01", "1954-11-01").HasCode("history.region")); // in the Aures that night
 }
 
 // ---- Shipped data (Plugins/GhostsOfNovember/Data/Narrative) ----------------------------

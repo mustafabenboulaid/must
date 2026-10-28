@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 get_filename_component(GON_PLUGIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../Plugins/GhostsOfNovember" ABSOLUTE)
-set(GON_MODULES GoNCore GoNNarrative GoNBlockout)
+set(GON_MODULES GoNCore GoNNarrative GoNCharacter GoNBlockout)
 
 set(GON_INCLUDE_DIRS "")
 set(GON_SOURCES "")

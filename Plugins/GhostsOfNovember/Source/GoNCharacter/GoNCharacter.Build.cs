@@ -6,6 +6,6 @@ public class GoNCharacter : ModuleRules
 	public GoNCharacter(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "GoNCore" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "GoNCore", "InputCore", "EnhancedInput", "AnimationCore", "Projects" });
 	}
 }

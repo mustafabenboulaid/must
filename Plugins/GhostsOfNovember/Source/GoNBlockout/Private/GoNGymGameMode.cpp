@@ -1,5 +1,6 @@
 #include "GoNGymGameMode.h"
 
+#include "Components/BoxComponent.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
 #include "Components/SkyLightComponent.h"
@@ -9,8 +10,19 @@
 #include "EngineUtils.h"
 #include "GameFramework/PlayerStart.h"
 #include "GoNBlockoutLog.h"
+#include "GoNCharacter.h"
 #include "GoNDeveloperSettings.h"
 #include "GoNGymBuilder.h"
+#include "GoNMarkers.h"
+#include "GoNNarrativeSubsystem.h"
+#include "GoNPlayerController.h"
+#include "GoNWoundedComrade.h"
+
+AGoNGymGameMode::AGoNGymGameMode()
+{
+	DefaultPawnClass = AGoNCharacter::StaticClass();
+	PlayerControllerClass = AGoNPlayerController::StaticClass();
+}
 
 void AGoNGymGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
@@ -67,8 +79,49 @@ void AGoNGymGameMode::InitGame(const FString& MapName, const FString& Options, F
 		World->SpawnActor<ASkyAtmosphere>(ASkyAtmosphere::StaticClass(), FTransform::Identity, Params);
 	}
 
-	if (Builder != nullptr && !TActorIterator<APlayerStart>(World))
+	if (Builder == nullptr)
 	{
-		World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), Builder->GetPlayerStartTransform(), Params);
+		return;
+	}
+	const FTransform Start = Builder->GetPlayerStartTransform();
+	if (!TActorIterator<APlayerStart>(World))
+	{
+		World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), Start, Params);
+	}
+
+	// A wounded comrade lying 3 m ahead of the start (gym floor top is the builder's Z).
+	if (!TActorIterator<AGoNWoundedComrade>(World))
+	{
+		const FVector Ahead = Start.GetLocation() + Start.GetRotation().GetForwardVector() * 300.0;
+		const FVector OnFloor(Ahead.X, Ahead.Y, Builder->GetActorLocation().Z + 60.0);
+		World->SpawnActor<AGoNWoundedComrade>(AGoNWoundedComrade::StaticClass(), FTransform(FRotator(0.0, 90.0, 0.0), OnFloor), Params);
+	}
+
+	// Narrative trigger around the first low cover: completes reach_cover in gym_test_mission.
+	if (!TActorIterator<AGoNNarrativeTrigger>(World))
+	{
+		const FBox Cover = Builder->GetLowCoverBounds();
+		if (Cover.IsValid)
+		{
+			if (AGoNNarrativeTrigger* Trigger = World->SpawnActor<AGoNNarrativeTrigger>(AGoNNarrativeTrigger::StaticClass(), FTransform(Cover.GetCenter()), Params))
+			{
+				Trigger->SetEventName(TEXT("gym.reached_cover"));
+				Trigger->TriggerBox->SetBoxExtent(Cover.GetExtent() + FVector(120.0, 120.0, 60.0));
+			}
+		}
+	}
+}
+
+void AGoNGymGameMode::StartPlay()
+{
+	Super::StartPlay();
+	const FName Mission = UGoNDeveloperSettings::Get()->GymAutoStartMission;
+	if (Mission.IsNone())
+	{
+		return;
+	}
+	if (UGoNNarrativeSubsystem* Narrative = UGoNNarrativeSubsystem::Get(this))
+	{
+		Narrative->StartMission(Mission);
 	}
 }

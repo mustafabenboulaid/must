@@ -24,9 +24,13 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Gym")
 	FString GymMapPath = TEXT("/Engine/Maps/Entry");
 
-	// Pawn used in the gym. Empty = engine DefaultPawn (free fly). Set your character Blueprint here.
+	// Pawn used in the gym. Empty = AGoNCharacter. Set your character Blueprint here to override.
 	UPROPERTY(Config, EditAnywhere, Category = "Gym")
 	TSoftClassPtr<APawn> GymPawnClass;
+
+	// Mission the gym starts on load (its narrative trigger completes the first beat). None = none.
+	UPROPERTY(Config, EditAnywhere, Category = "Gym")
+	FName GymAutoStartMission = TEXT("gym_test_mission");
 
 	// Overrides Plugins/GhostsOfNovember/Data/Narrative (absolute path). Leave empty normally.
 	UPROPERTY(Config, EditAnywhere, Category = "Narrative")

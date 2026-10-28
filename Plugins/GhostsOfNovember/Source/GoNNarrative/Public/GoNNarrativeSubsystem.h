@@ -1,12 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Containers/Ticker.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Tickable.h"
 
 #include "GoNNarrativeSubsystem.generated.h"
 
+class APlayerController;
 class FGoNNarrativeRuntime;
+class UCanvas;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FGoNBeatEnteredSignature, FName, MissionId, FName, BeatId, const FString&, BeatType);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FGoNCheckpointSignature, FName, MissionId, FName, CheckpointId);
@@ -14,10 +16,10 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FGoNMissionEndedSignature, FName, M
 
 // Thin Unreal wrapper over the pure narrative core (Logic/GoNMissionRunner.h):
 // loads Data/Narrative, validates it, runs one mission at a time, forwards gameplay
-// events, ticks wait beats and saves at checkpoints. Lives for the whole game session,
-// so consequences carry across map changes.
+// events, ticks wait beats (with the game world: pause and time dilation apply) and saves at
+// checkpoints. Lives for the whole game session, so consequences carry across map changes.
 UCLASS()
-class GONNARRATIVE_API UGoNNarrativeSubsystem : public UGameInstanceSubsystem
+class GONNARRATIVE_API UGoNNarrativeSubsystem : public UGameInstanceSubsystem, public FTickableGameObject
 {
 	GENERATED_BODY()
 
@@ -74,6 +76,13 @@ public:
 	FString DescribeState() const;
 	FString GetNarrativeDirectory() const;
 
+	// FTickableGameObject
+	virtual void Tick(float DeltaTime) override;
+	virtual ETickableTickType GetTickableTickType() const override;
+	virtual bool IsTickable() const override;
+	virtual UWorld* GetTickableGameObjectWorld() const override;
+	virtual TStatId GetStatId() const override;
+
 	UPROPERTY(BlueprintAssignable, Category = "GoN|Narrative")
 	FGoNBeatEnteredSignature OnBeatEntered;
 
@@ -84,12 +93,16 @@ public:
 	FGoNMissionEndedSignature OnMissionEnded;
 
 private:
-	friend class FGoNNarrativeRuntime;
+	friend class APlayerController;
+class FGoNNarrativeRuntime;
+class UCanvas;
 
-	bool Tick(float DeltaSeconds);
 	void DrainPendingEvents();
+	// `gon.narrative.debug 1` overlay, drawn on the game viewport canvas every frame.
+	void DrawDebugOverlay(UCanvas* Canvas, APlayerController* PlayerController);
 
 	// Pure-core state lives in the .cpp (TSharedPtr tolerates the incomplete type here).
 	TSharedPtr<FGoNNarrativeRuntime> Runtime;
-	FTSTicker::FDelegateHandle TickHandle;
+	FDelegateHandle DebugDrawHandle;
+	uint64 TickCount = 0;
 };

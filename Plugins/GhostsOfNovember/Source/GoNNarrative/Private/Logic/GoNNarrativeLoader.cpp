@@ -130,6 +130,14 @@ namespace GoN::Narrative
 			return bFrom && bTo;
 		}
 
+		void ReadTimelineEntry(const FValue& Object, FTimelineEntry& Out, const std::string& Context, FIssueList& Issues)
+		{
+			ReadDateRange(Object, Out.Dates, Context, Issues);
+			Out.PlaceId = RequireString(Object, "place", Context, Issues);
+			Out.CharacterIds = StringList(Object, "characters", Context, Issues);
+			Out.PovCharacterId = Object.GetString("pov");
+		}
+
 		void ReadEffects(const FValue* List, std::vector<FEffect>& Out, const std::string& Context, FIssueList& Issues)
 		{
 			if (List == nullptr)
@@ -228,10 +236,20 @@ namespace GoN::Narrative
 
 		if (const FValue* Timeline = Root.Find("timeline"))
 		{
-			CheckKeys(*Timeline, {"from", "to", "place", "characters"}, Ctx + "/timeline", Issues);
-			ReadDateRange(*Timeline, Out.Timeline.Dates, Ctx + "/timeline", Issues);
-			Out.Timeline.PlaceId = RequireString(*Timeline, "place", Ctx + "/timeline", Issues);
-			Out.Timeline.CharacterIds = StringList(*Timeline, "characters", Ctx + "/timeline", Issues);
+			CheckKeys(*Timeline, {"from", "to", "place", "characters", "pov", "segments", "note"}, Ctx + "/timeline", Issues);
+			ReadTimelineEntry(*Timeline, Out.Timeline, Ctx + "/timeline", Issues);
+			if (const FValue* Segments = Timeline->Find("segments"))
+			{
+				for (const FValue& SegmentJson : Segments->Items())
+				{
+					FTimelineEntry Segment;
+					Segment.Id = RequireString(SegmentJson, "id", Ctx + "/timeline/segments", Issues);
+					const std::string SegmentCtx = Ctx + "/segment:" + Segment.Id;
+					CheckKeys(SegmentJson, {"id", "from", "to", "place", "characters", "pov", "note"}, SegmentCtx, Issues);
+					ReadTimelineEntry(SegmentJson, Segment, SegmentCtx, Issues);
+					Out.Segments.push_back(Segment);
+				}
+			}
 		}
 		else
 		{
@@ -268,7 +286,7 @@ namespace GoN::Narrative
 			FBeat Beat;
 			Beat.Id = RequireString(Item, "id", Ctx + "/beats", Issues);
 			const std::string BeatCtx = Ctx + "/" + Beat.Id;
-			CheckKeys(Item, {"id", "type", "next", "completeOn", "seconds", "branches", "else", "onEnter", "onComplete", "lines", "asset", "text", "outcome", "note"}, BeatCtx, Issues);
+			CheckKeys(Item, {"id", "type", "next", "completeOn", "seconds", "branches", "else", "onEnter", "onComplete", "lines", "asset", "text", "outcome", "segment", "note"}, BeatCtx, Issues);
 			const std::string TypeText = Item.GetString("type");
 			if (!ParseBeatType(TypeText, Beat.Type))
 			{
@@ -282,6 +300,7 @@ namespace GoN::Narrative
 			Beat.Asset = Item.GetString("asset");
 			Beat.Text = ReadText(Item.Find("text"));
 			Beat.Outcome = Item.GetString("outcome");
+			Beat.Segment = Item.GetString("segment");
 			Beat.LineIds = StringList(Item, "lines", BeatCtx, Issues);
 			ReadEffects(Item.Find("onEnter"), Beat.OnEnter, BeatCtx, Issues);
 			ReadEffects(Item.Find("onComplete"), Beat.OnComplete, BeatCtx, Issues);

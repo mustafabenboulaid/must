@@ -251,6 +251,7 @@ namespace GoN::Narrative
 		std::string Asset;                // level sequence / scene id for cinematic & scene beats
 		FLocalizedText Text;              // objective text, card text
 		std::string Outcome;              // end beats: "success", "failed", ...
+		std::string Segment;              // timeline segment id ("" = the mission-level entry)
 	};
 
 	// Design doc §12: every mission needs these, stated by the writer.
@@ -264,11 +265,14 @@ namespace GoN::Narrative
 		std::string Transition;
 	};
 
+	// Where and when a mission (or one scene of it) happens, and who is physically there.
 	struct FTimelineEntry
 	{
+		std::string Id;          // "" for the mission-level entry, the segment id otherwise
 		FDateRange Dates;
 		std::string PlaceId;
 		std::vector<std::string> CharacterIds; // physically present
+		std::string PovCharacterId;            // who the player controls ("" = not specified)
 	};
 
 	struct FMission
@@ -279,6 +283,8 @@ namespace GoN::Narrative
 		FLocalizedText Title;
 		FMissionDesign Design;
 		FTimelineEntry Timeline;
+		// Scenes in different places/with different people (e.g. briefing, then the action).
+		std::vector<FTimelineEntry> Segments;
 		std::string StartBeat;
 		std::vector<FBeat> Beats;
 		std::vector<FDialogueLine> Lines;
@@ -291,6 +297,22 @@ namespace GoN::Narrative
 				if (Beat.Id == BeatId)
 				{
 					return &Beat;
+				}
+			}
+			return nullptr;
+		}
+		// Segment by id; "" returns the mission-level entry.
+		const FTimelineEntry* FindTimelineEntry(const std::string& SegmentId) const
+		{
+			if (SegmentId.empty())
+			{
+				return &Timeline;
+			}
+			for (const FTimelineEntry& Segment : Segments)
+			{
+				if (Segment.Id == SegmentId)
+				{
+					return &Segment;
 				}
 			}
 			return nullptr;

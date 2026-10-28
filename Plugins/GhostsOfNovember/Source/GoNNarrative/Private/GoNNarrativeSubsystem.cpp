@@ -1,9 +1,11 @@
 #include "GoNNarrativeSubsystem.h"
 
+#include "Debug/DebugDrawService.h"
+#include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
-#include "GameFramework/WorldSettings.h"
+#include "GameFramework/PlayerController.h"
 #include "GoNDeveloperSettings.h"
 #include "GoNNarrativeLog.h"
 #include "GoNSaveGame.h"
@@ -22,8 +24,6 @@ namespace GoNNarrativeSubsystemDetail
 		TEXT("gon.narrative.debug"),
 		0,
 		TEXT("GoN Narrative: 1 = show the current mission/beat/consequences on screen."));
-
-	constexpr int32 DebugMessageKey = 0x60E01;
 
 	void LogIssue(const GoN::Narrative::FIssue& Issue, bool bIncludeWarnings)
 	{
@@ -127,12 +127,12 @@ void UGoNNarrativeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 	Runtime = MakeShared<FGoNNarrativeRuntime>(*this);
 	ReloadData();
-	TickHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UGoNNarrativeSubsystem::Tick));
+	DebugDrawHandle = UDebugDrawService::Register(TEXT("Game"), FDebugDrawDelegate::CreateUObject(this, &UGoNNarrativeSubsystem::DrawDebugOverlay));
 }
 
 void UGoNNarrativeSubsystem::Deinitialize()
 {
-	FTSTicker::GetCoreTicker().RemoveTicker(TickHandle);
+	UDebugDrawService::Unregister(DebugDrawHandle);
 	Runtime.Reset();
 	Super::Deinitialize();
 }
@@ -393,37 +393,57 @@ bool UGoNNarrativeSubsystem::AutoRunMission(FName MissionId, int32 MaxSteps)
 	return bEnded;
 }
 
-bool UGoNNarrativeSubsystem::Tick(float DeltaSeconds)
+void UGoNNarrativeSubsystem::Tick(float DeltaTime)
 {
-	if (!Runtime.IsValid())
-	{
-		return true;
-	}
-	float GameDelta = DeltaSeconds;
-	if (const UWorld* World = GetGameInstance() ? GetGameInstance()->GetWorld() : nullptr)
-	{
-		if (World->IsPaused())
-		{
-			GameDelta = 0.0f;
-		}
-		else if (const AWorldSettings* WorldSettings = World->GetWorldSettings())
-		{
-			GameDelta *= WorldSettings->GetEffectiveTimeDilation();
-		}
-	}
-	if (Runtime->Runner.IsValid() && GameDelta > 0.0f && Runtime->DispatchDepth == 0)
+	++TickCount;
+	// DeltaTime comes from the world tick: already dilated, and the world does not tick us while paused.
+	if (Runtime.IsValid() && Runtime->Runner.IsValid() && DeltaTime > 0.0f && Runtime->DispatchDepth == 0)
 	{
 		{
 			FGoNNarrativeRuntime::FDispatchScope Scope(Runtime->DispatchDepth);
-			Runtime->Runner->Tick(GameDelta);
+			Runtime->Runner->Tick(DeltaTime);
 		}
 		DrainPendingEvents();
 	}
-	if (GoNNarrativeSubsystemDetail::CVarNarrativeDebug.GetValueOnGameThread() > 0 && GEngine)
+}
+
+ETickableTickType UGoNNarrativeSubsystem::GetTickableTickType() const
+{
+	// The class default object must never tick.
+	return IsTemplate() ? ETickableTickType::Never : ETickableTickType::Conditional;
+}
+
+bool UGoNNarrativeSubsystem::IsTickable() const
+{
+	return Runtime.IsValid();
+}
+
+UWorld* UGoNNarrativeSubsystem::GetTickableGameObjectWorld() const
+{
+	const UGameInstance* GameInstance = GetGameInstance();
+	return GameInstance ? GameInstance->GetWorld() : nullptr;
+}
+
+TStatId UGoNNarrativeSubsystem::GetStatId() const
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UGoNNarrativeSubsystem, STATGROUP_Tickables);
+}
+
+void UGoNNarrativeSubsystem::DrawDebugOverlay(UCanvas* Canvas, APlayerController* PlayerController)
+{
+	if (Canvas == nullptr || GoNNarrativeSubsystemDetail::CVarNarrativeDebug.GetValueOnGameThread() <= 0)
 	{
-		GEngine->AddOnScreenDebugMessage(GoNNarrativeSubsystemDetail::DebugMessageKey, 0.5f, FColor::Yellow, DescribeState());
+		return;
 	}
-	return true;
+	// Every game viewport draws through this service; only draw in our own game instance's world.
+	const UWorld* OwnWorld = GetTickableGameObjectWorld();
+	if (PlayerController != nullptr && PlayerController->GetWorld() != OwnWorld)
+	{
+		return;
+	}
+	// Ids and keys only (ASCII): Arabic text must go through the shaped HUD path, not Canvas->DrawText.
+	Canvas->SetDrawColor(FColor::Yellow);
+	Canvas->DrawText(GEngine->GetSmallFont(), TEXT("GoN Narrative: ") + DescribeState(), 20.0f, 60.0f);
 }
 
 TArray<FName> UGoNNarrativeSubsystem::GetMissionIds() const
@@ -494,5 +514,6 @@ FString UGoNNarrativeSubsystem::DescribeState() const
 		Text = TEXT("no mission running");
 	}
 	Text += TEXT(" | ") + GoN::ToFString(Runtime->State->Consequences.DebugString());
+	Text += FString::Printf(TEXT(" | ticks %llu"), static_cast<unsigned long long>(TickCount));
 	return Text;
 }
