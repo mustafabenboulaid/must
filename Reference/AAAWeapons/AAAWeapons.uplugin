@@ -1,0 +1,25 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "AAA City Weapons",
+	"Description": "Rifle for the third-person character: procedural rifle model, the rifle animation set with hand IK and aim pitch, recoil (camera kick + weapon spring), simulated bullets with tracers, impacts, bullet holes, shell casings, training targets, police that shoot back, health / WASTED / respawn.",
+	"Category": "Gameplay",
+	"CreatedBy": "AAA City",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "AAAWeapons",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "AAATraffic",
+			"Enabled": true
+		}
+	]
+}

@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "id": "ghosts_of_november",
+  "note": "Chapter order of the design doc. Only Chapter 1 (vertical slice) has missions so far.",
+  "chapters": [
+    {
+      "id": "ch1_aures", "order": 1,
+      "title": { "ar": "شرارة الأوراس", "en": "Spark of the Aurès" },
+      "period": "late Oct 1954 - early 1955",
+      "missions": ["ch1_ma_last_night", "ch1_mb_first_november", "ch1_mc_road_to_mountain"]
+    }
+  ]
+}

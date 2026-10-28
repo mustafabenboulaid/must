@@ -1,0 +1,129 @@
+{
+  "schema": 1,
+  "id": "gym_test_mission",
+  "chapter": "test",
+  "testOnly": true,
+  "title": {
+    "ar": "مهمة الاختبار",
+    "en": "Gym test mission"
+  },
+  "design": {
+    "visibleGoal": "Reach cover, hear the radio, spot the patrol route.",
+    "dramaticGoal": "Prove the beat graph runs start to end from data.",
+    "obstacle": "A timed rest and a trigger that waits for a gameplay event.",
+    "decision": "Branch on local trust gathered earlier in the mission.",
+    "consequence": "Trust, fatigue and an information flag change and persist.",
+    "transition": "Ends in one of two outcomes; the checkpoint can be reloaded."
+  },
+  "timeline": {
+    "from": "1954-10-30",
+    "to": "1954-10-30",
+    "place": "gym",
+    "characters": [
+      "gym_tester",
+      "fic_aures_fighter_01"
+    ]
+  },
+  "startBeat": "reach_cover",
+  "lines": [
+    {
+      "id": "gym_l1",
+      "speaker": "fic_aures_fighter_01",
+      "lang": "ar-dz",
+      "text": "اختبار الراديو… واحد، زوج.",
+      "dramatized": false
+    },
+    {
+      "id": "gym_l2",
+      "speaker": "narrator",
+      "lang": "ar",
+      "text": "سطر اختبار من الراوي عبر الشبكة.",
+      "remote": true
+    }
+  ],
+  "beats": [
+    {
+      "id": "reach_cover",
+      "type": "objective",
+      "text": {
+        "ar": "اوصل للساتر المنخفض",
+        "en": "Reach the low cover"
+      },
+      "completeOn": "gym.reached_cover",
+      "onComplete": [
+        {
+          "op": "add",
+          "key": "trust.gym",
+          "value": 10
+        }
+      ],
+      "next": "radio"
+    },
+    {
+      "id": "radio",
+      "type": "dialogue",
+      "lines": [
+        "gym_l1",
+        "gym_l2"
+      ],
+      "next": "cp_after_radio"
+    },
+    {
+      "id": "cp_after_radio",
+      "type": "checkpoint",
+      "next": "rest"
+    },
+    {
+      "id": "rest",
+      "type": "wait",
+      "seconds": 2,
+      "onEnter": [
+        {
+          "op": "add",
+          "key": "group.fatigue",
+          "value": 10
+        }
+      ],
+      "next": "listen"
+    },
+    {
+      "id": "listen",
+      "type": "trigger",
+      "completeOn": "gym.heard_patrol",
+      "onComplete": [
+        {
+          "op": "setFlag",
+          "key": "gym.patrol_route_known"
+        }
+      ],
+      "next": "decide"
+    },
+    {
+      "id": "decide",
+      "type": "branch",
+      "branches": [
+        {
+          "if": [
+            {
+              "key": "trust.gym",
+              "op": ">=",
+              "value": 10
+            }
+          ],
+          "next": "end_with_help"
+        }
+      ],
+      "else": "end_alone"
+    },
+    {
+      "id": "end_with_help",
+      "type": "end",
+      "outcome": "success"
+    },
+    {
+      "id": "end_alone",
+      "type": "end",
+      "outcome": "success_alone"
+    }
+  ]
+}

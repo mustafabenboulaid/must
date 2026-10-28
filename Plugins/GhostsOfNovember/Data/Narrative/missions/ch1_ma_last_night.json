@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "id": "ch1_ma_last_night",
+  "chapter": "ch1_aures",
+  "title": {
+    "ar": "الليلة الأخيرة",
+    "en": "The Last Night"
+  },
+  "design": {
+    "visibleGoal": "لقاءات واتصالات ومراجعة معلومات قبل ساعة الصفر.",
+    "dramaticGoal": "يتعلم اللاعب أن الثقة والوقت أهم من القوة النارية.",
+    "obstacle": "معلومة غير مؤكدة عن دورية، ووقت محدود قبل الفجر.",
+    "decision": "التحقق من المعلومة بالملاحظة أو الاعتماد على الشبكة.",
+    "consequence": "تتغير ثقة الدوار وصحة الشبكة وتوفر المعلومات للمهمة التالية.",
+    "transition": "الانتقال إلى إحاطة ليلة الفاتح من نوفمبر."
+  },
+  "timeline": {
+    "from": "1954-10-30",
+    "to": "1954-10-31",
+    "place": "aures_douar",
+    "characters": [
+      "ben_boulaid",
+      "fic_aures_fighter_01",
+      "fic_aures_fighter_02",
+      "fic_aures_fighter_03",
+      "fic_douar_woman_01"
+    ]
+  },
+  "startBeat": "arrive",
+  "lines": [
+    {
+      "id": "ma_zohra_1",
+      "speaker": "fic_douar_woman_01",
+      "lang": "ar-dz",
+      "text": "(نص مؤقت) الدورية فاتت مع المغرب، بصح ما نعرفش واش ترجع الليلة.",
+      "dramatized": false
+    },
+    {
+      "id": "ma_salah_1",
+      "speaker": "fic_aures_fighter_01",
+      "lang": "ar-dz",
+      "text": "(نص مؤقت) لازم نتأكدو بعينينا قبل ما نبعثو الخبر.",
+      "dramatized": false
+    }
+  ],
+  "beats": [
+    {
+      "id": "arrive",
+      "type": "objective",
+      "text": {
+        "ar": "ادخل الدوار دون لفت الانتباه"
+      },
+      "completeOn": "ma.arrived",
+      "next": "meet_contact"
+    },
+    {
+      "id": "meet_contact",
+      "type": "dialogue",
+      "lines": [
+        "ma_zohra_1",
+        "ma_salah_1"
+      ],
+      "onComplete": [
+        {
+          "op": "setFlag",
+          "key": "info.patrol_rumour"
+        }
+      ],
+      "next": "check_info"
+    },
+    {
+      "id": "check_info",
+      "type": "objective",
+      "text": {
+        "ar": "راقب الطريق وتحقق من موعد الدورية"
+      },
+      "completeOn": "ma.patrol_observed",
+      "onComplete": [
+        {
+          "op": "setFlag",
+          "key": "info.patrol_schedule"
+        },
+        {
+          "op": "add",
+          "key": "trust.douar",
+          "value": 10
+        }
+      ],
+      "next": "cp_info"
+    },
+    {
+      "id": "cp_info",
+      "type": "checkpoint",
+      "next": "deliver"
+    },
+    {
+      "id": "deliver",
+      "type": "objective",
+      "text": {
+        "ar": "أوصل الرسالة وتأكد من استلامها"
+      },
+      "completeOn": "ma.message_confirmed",
+      "next": "network_check"
+    },
+    {
+      "id": "network_check",
+      "type": "branch",
+      "branches": [
+        {
+          "if": [
+            {
+              "key": "trust.douar",
+              "op": ">=",
+              "value": 10
+            },
+            {
+              "key": "info.patrol_schedule",
+              "op": "set"
+            }
+          ],
+          "next": "end_network_holds"
+        }
+      ],
+      "else": "end_network_strained"
+    },
+    {
+      "id": "end_network_holds",
+      "type": "end",
+      "outcome": "network_holds",
+      "onEnter": [
+        {
+          "op": "add",
+          "key": "network.health",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "end_network_strained",
+      "type": "end",
+      "outcome": "network_strained",
+      "onEnter": [
+        {
+          "op": "add",
+          "key": "network.health",
+          "value": -10
+        }
+      ]
+    }
+  ]
+}

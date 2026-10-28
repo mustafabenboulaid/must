@@ -1,0 +1,149 @@
+{
+  "schema": 1,
+  "note": "Historical entries: presence windows and dates await the historical consultant (review: pending). Fictional entries: names and backstories await the user's approval (approved: false).",
+  "characters": [
+    {
+      "id": "ben_boulaid",
+      "nameAr": "مصطفى بن بولعيد",
+      "nameLatin": "Mostefa Ben Boulaïd",
+      "historical": true,
+      "role": "Head of Zone 1 (Aurès) on 1 November 1954",
+      "death": {
+        "from": "1956-03-22",
+        "to": "1956-03-23",
+        "sources": [
+          "aps_ben_boulaid_70"
+        ],
+        "note": "Sources differ (22 or 23 March 1956). Never staged as an invented death scene."
+      },
+      "presence": [
+        {
+          "region": "aures",
+          "from": "1954-10-01",
+          "to": "1954-10-21",
+          "note": "Before the meeting of the six. Travel days to and from Algiers are left open for the consultant."
+        },
+        {
+          "region": "algerois",
+          "from": "1954-10-23",
+          "to": "1954-10-24",
+          "note": "Meeting of the six in Algiers (Raïs Hamidou / Pointe Pescade) that set 1 November 1954. Exact dates and source: historical consultant."
+        },
+        {
+          "region": "aures",
+          "from": "1954-10-26",
+          "to": "1955-01-31",
+          "note": "Back in the Aurès for 1 November. Return date and early-1955 departure: historical consultant.",
+          "sources": [
+            "mdn_eldjeich_mar2026"
+          ]
+        }
+      ],
+      "review": "pending"
+    },
+    {
+      "id": "didouche",
+      "nameAr": "ديدوش مراد",
+      "nameLatin": "Didouche Mourad",
+      "historical": true,
+      "role": "Head of Zone 2 (North Constantine) in 1954",
+      "death": {
+        "from": "1955-01-18",
+        "to": "1955-01-18",
+        "sources": [
+          "radio_algerie_didouche"
+        ]
+      },
+      "presence": [
+        {
+          "region": "north_constantine",
+          "from": "1954-10-01",
+          "to": "1955-01-18"
+        }
+      ],
+      "review": "pending"
+    },
+    {
+      "id": "zighoud",
+      "nameAr": "زيغود يوسف",
+      "nameLatin": "Zighoud Youcef",
+      "historical": true,
+      "role": "Zone 2 (North Constantine); leads it after January 1955",
+      "presence": [
+        {
+          "region": "north_constantine",
+          "from": "1954-10-01",
+          "to": "1955-08-31"
+        }
+      ],
+      "review": "pending"
+    },
+    {
+      "id": "ben_mhidi",
+      "nameAr": "العربي بن مهيدي",
+      "nameLatin": "Larbi Ben M'Hidi",
+      "historical": true,
+      "role": "Head of Zone 5 (Oranie) in 1954",
+      "presence": [
+        {
+          "region": "oranie",
+          "from": "1954-10-01",
+          "to": "1954-12-31"
+        }
+      ],
+      "review": "pending"
+    },
+    {
+      "id": "lalla_fatma_nsoumer",
+      "nameAr": "لالة فاطمة نسومر",
+      "nameLatin": "Lalla Fatma N'Soumer",
+      "historical": true,
+      "excluded": true,
+      "excludedReason": "19th-century figure (design doc §4); use a fictional woman inspired by women's roles instead"
+    },
+    {
+      "id": "narrator",
+      "nameAr": "الراوي",
+      "nameLatin": "Narrator",
+      "historical": false
+    },
+    {
+      "id": "fic_aures_fighter_01",
+      "nameAr": "صالح (اسم مؤقت)",
+      "nameLatin": "Salah (placeholder)",
+      "historical": false,
+      "approved": false,
+      "role": "Fictional Aurès fighter; replaces the prototype's misplaced squad member"
+    },
+    {
+      "id": "fic_aures_fighter_02",
+      "nameAr": "عمّار (اسم مؤقت)",
+      "nameLatin": "Ammar (placeholder)",
+      "historical": false,
+      "approved": false,
+      "role": "Fictional Aurès fighter"
+    },
+    {
+      "id": "fic_aures_fighter_03",
+      "nameAr": "لخضر (اسم مؤقت)",
+      "nameLatin": "Lakhdar (placeholder)",
+      "historical": false,
+      "approved": false,
+      "role": "Fictional Aurès fighter; the first loss in M-C"
+    },
+    {
+      "id": "fic_douar_woman_01",
+      "nameAr": "زهرة (اسم مؤقت)",
+      "nameLatin": "Zohra (placeholder)",
+      "historical": false,
+      "approved": false,
+      "role": "Fictional woman of the douar network (messages, supplies); not decoration (design doc §12)"
+    },
+    {
+      "id": "gym_tester",
+      "nameAr": "المختبِر",
+      "nameLatin": "Gym tester",
+      "historical": false
+    }
+  ]
+}

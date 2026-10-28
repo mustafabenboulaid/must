@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "note": "Starting references from the design doc §14. Not a substitute for the historical consultant; every mission-level detail must be checked before the script is locked.",
+  "sources": [
+    { "id": "mfa_history", "citation": "Ministère des Affaires étrangères (Algérie), « Histoire de l'Algérie »", "url": "https://www.mfa.gov.dz/discover-algeria/history-of-algeria", "certainty": "documented" },
+    { "id": "cnerh_soummam_aout55", "citation": "CNERH (Centre national d'études et de recherche sur le mouvement national et la révolution du 1er novembre 1954), Soummam et 20 août 1955", "url": "https://cnerh-nov54.dz/article/79", "certainty": "documented" },
+    { "id": "aps_ben_boulaid_70", "citation": "Algérie Presse Service, 70e anniversaire du martyre de Mostefa Ben Boulaïd, mars 2026", "url": "https://www.aps.dz/en/algeria/national-news/mn5rvwzr-minister-tacherift-chairs-70th-anniversary-of-mostefa-ben-boulaid-s-martyrdom", "certainty": "disputed", "note": "Exact date of death (22 or 23 March 1956) differs between sources." },
+    { "id": "radio_algerie_didouche", "citation": "Radio Algérienne, anniversaire de la mort de Didouche Mourad, 18 janvier 1955", "url": "https://radioalgerie.dz/news/fr/article/20200118/188557.html", "certainty": "documented" },
+    { "id": "mdn_eldjeich_mar2026", "citation": "Ministère de la Défense nationale, El Djeich, mars 2026 (Ben Boulaïd, Amirouche, Si El Haouès)", "url": "https://www.mdn.dz/site_principal/sommaire/revues/images/EldjeichMar2026An.pdf", "certainty": "documented" },
+    { "id": "un_evian", "citation": "United Nations Treaty Series vol. 507, Evian declarations; ceasefire 19 March 1962", "url": "https://treaties.un.org/doc/Publication/UNTS/Volume%20507/volume-507-I-7395-English.pdf", "certainty": "documented" }
+  ]
+}

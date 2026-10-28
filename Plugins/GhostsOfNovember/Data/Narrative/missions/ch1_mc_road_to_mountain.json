@@ -1,0 +1,159 @@
+{
+  "schema": 1,
+  "id": "ch1_mc_road_to_mountain",
+  "chapter": "ch1_aures",
+  "title": {
+    "ar": "الطريق إلى الجبل",
+    "en": "The Road to the Mountain"
+  },
+  "design": {
+    "visibleGoal": "الانسحاب إلى الجبل بمؤن محدودة عبر مسار آمن.",
+    "dramaticGoal": "أول خسارة تكشف ثمن القرار.",
+    "obstacle": "التضاريس، البرد، الإرهاق، والدوريات.",
+    "decision": "اختيار المسار: الوادي الأسرع أو الحافة الأكثر أمانًا والأكثر إرهاقًا.",
+    "consequence": "يتغير الإرهاق والشك وعدد الخسائر.",
+    "transition": "أخبار متباينة من المناطق الأخرى: بدأت الثورة، ولا أحد يعرف بعد كيف ستنجو."
+  },
+  "timeline": {
+    "from": "1954-11-01",
+    "to": "1954-11-10",
+    "place": "aures_mountains",
+    "characters": [
+      "fic_aures_fighter_01",
+      "fic_aures_fighter_02",
+      "fic_aures_fighter_03"
+    ]
+  },
+  "startBeat": "withdraw",
+  "lines": [
+    {
+      "id": "mc_end_1",
+      "speaker": "narrator",
+      "lang": "ar",
+      "text": "تصل أخبار متباينة من المناطق الأخرى.",
+      "remote": true
+    },
+    {
+      "id": "mc_end_2",
+      "speaker": "narrator",
+      "lang": "ar",
+      "text": "بدأت الثورة… أما كيف ستنجو، فلا أحد يعرف بعد.",
+      "remote": true
+    }
+  ],
+  "beats": [
+    {
+      "id": "withdraw",
+      "type": "objective",
+      "text": {
+        "ar": "غادر البلدة قبل الفجر"
+      },
+      "completeOn": "mc.left_town",
+      "next": "read_terrain"
+    },
+    {
+      "id": "read_terrain",
+      "type": "objective",
+      "text": {
+        "ar": "اقرأ التضاريس واختر مسارًا"
+      },
+      "completeOn": "mc.route_chosen",
+      "next": "route"
+    },
+    {
+      "id": "route",
+      "type": "branch",
+      "branches": [
+        {
+          "if": [
+            {
+              "key": "choice.route_ridge",
+              "op": "set"
+            }
+          ],
+          "next": "ridge"
+        }
+      ],
+      "else": "valley"
+    },
+    {
+      "id": "ridge",
+      "type": "objective",
+      "text": {
+        "ar": "اعبر الحافة"
+      },
+      "completeOn": "mc.ridge_crossed",
+      "onEnter": [
+        {
+          "op": "add",
+          "key": "group.fatigue",
+          "value": 30
+        }
+      ],
+      "next": "cp_camp"
+    },
+    {
+      "id": "valley",
+      "type": "objective",
+      "text": {
+        "ar": "اعبر الوادي"
+      },
+      "completeOn": "mc.valley_crossed",
+      "onEnter": [
+        {
+          "op": "add",
+          "key": "suspicion.aures",
+          "value": 20
+        }
+      ],
+      "next": "cp_camp"
+    },
+    {
+      "id": "cp_camp",
+      "type": "checkpoint",
+      "next": "cold_night"
+    },
+    {
+      "id": "cold_night",
+      "type": "wait",
+      "seconds": 5,
+      "onEnter": [
+        {
+          "op": "add",
+          "key": "group.fatigue",
+          "value": 10
+        }
+      ],
+      "next": "first_loss"
+    },
+    {
+      "id": "first_loss",
+      "type": "scene",
+      "note": "Fictional comrade (fic_aures_fighter_03). Shown through the group's reaction, not as a reward.",
+      "asset": "",
+      "completeOn": "mc.loss_scene_done",
+      "onComplete": [
+        {
+          "op": "add",
+          "key": "people.lost",
+          "value": 1
+        }
+      ],
+      "next": "news"
+    },
+    {
+      "id": "news",
+      "type": "dialogue",
+      "lines": [
+        "mc_end_1",
+        "mc_end_2"
+      ],
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "outcome": "chapter_complete"
+    }
+  ]
+}
