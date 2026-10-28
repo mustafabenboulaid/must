@@ -1,0 +1,56 @@
+# Ghosts of November — standalone build of the pure C++ core and its tests.
+#   cmake -S Tools/LogicTests -B Build/LogicTests && cmake --build Build/LogicTests && ctest --test-dir Build/LogicTests --output-on-failure
+# Two executables:
+#   gon_logic_tests        normal build, strict warnings (shadowing = error, like UE)
+#   gon_logic_tests_unity  one .cpp per module like UE unity builds, UE/Windows macros force-included
+cmake_minimum_required(VERSION 3.20)
+project(GhostsOfNovemberLogicTests CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+get_filename_component(GON_PLUGIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../Plugins/GhostsOfNovember" ABSOLUTE)
+set(GON_MODULES GoNCore GoNNarrative GoNBlockout)
+
+set(GON_INCLUDE_DIRS "")
+set(GON_SOURCES "")
+set(GON_UNITY_SOURCES "")
+foreach(MODULE ${GON_MODULES})
+  set(MODULE_DIR "${GON_PLUGIN_DIR}/Source/${MODULE}")
+  list(APPEND GON_INCLUDE_DIRS "${MODULE_DIR}/Public")
+  file(GLOB MODULE_SOURCES CONFIGURE_DEPENDS "${MODULE_DIR}/Private/Logic/*.cpp" "${MODULE_DIR}/Private/Tests/Logic/*.cpp")
+  list(SORT MODULE_SOURCES)
+  list(APPEND GON_SOURCES ${MODULE_SOURCES})
+  set(UNITY_TEXT "// generated: unity file for ${MODULE}\n")
+  foreach(SOURCE ${MODULE_SOURCES})
+    string(APPEND UNITY_TEXT "#include \"${SOURCE}\"\n")
+  endforeach()
+  set(UNITY_FILE "${CMAKE_CURRENT_BINARY_DIR}/Unity_${MODULE}.cpp")
+  file(GENERATE OUTPUT "${UNITY_FILE}" CONTENT "${UNITY_TEXT}")
+  list(APPEND GON_UNITY_SOURCES "${UNITY_FILE}")
+endforeach()
+
+if(MSVC)
+  set(GON_WARNINGS /W4 /WX /permissive- /utf-8 /w44456 /w44457 /w44458 /GR- /D_HAS_EXCEPTIONS=0)
+else()
+  set(GON_WARNINGS -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor -Wfloat-conversion -Werror -fno-exceptions -fno-rtti)
+endif()
+
+foreach(TARGET_NAME gon_logic_tests gon_logic_tests_unity)
+  add_executable(${TARGET_NAME} main.cpp)
+  target_include_directories(${TARGET_NAME} PRIVATE ${GON_INCLUDE_DIRS})
+  target_compile_options(${TARGET_NAME} PRIVATE ${GON_WARNINGS})
+  target_compile_definitions(${TARGET_NAME} PRIVATE GON_DEFAULT_DATA_DIR="${GON_PLUGIN_DIR}/Data")
+endforeach()
+target_sources(gon_logic_tests PRIVATE ${GON_SOURCES})
+target_sources(gon_logic_tests_unity PRIVATE ${GON_UNITY_SOURCES})
+if(MSVC)
+  target_compile_options(gon_logic_tests_unity PRIVATE "/FI${CMAKE_CURRENT_SOURCE_DIR}/ue_macro_shim.h")
+else()
+  target_compile_options(gon_logic_tests_unity PRIVATE -include "${CMAKE_CURRENT_SOURCE_DIR}/ue_macro_shim.h")
+endif()
+
+enable_testing()
+add_test(NAME logic COMMAND gon_logic_tests)
+add_test(NAME logic_unity COMMAND gon_logic_tests_unity)

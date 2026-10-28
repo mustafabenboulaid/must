@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "stats": [
+    { "key": "suspicion.*", "min": 0, "max": 100, "default": 0, "note": "per region/district, e.g. suspicion.aures" },
+    { "key": "trust.*", "min": -100, "max": 100, "default": 0, "note": "local trust per community, e.g. trust.douar" },
+    { "key": "network.health", "min": 0, "max": 100, "default": 60 },
+    { "key": "group.fatigue", "min": 0, "max": 100, "default": 0 },
+    { "key": "people.saved", "min": 0, "max": 100000, "default": 0 },
+    { "key": "people.lost", "min": 0, "max": 100000, "default": 0 },
+    { "key": "supplies.*", "min": 0, "max": 1000, "default": 0, "note": "carried supplies, e.g. supplies.water" }
+  ],
+  "flags": ["info.*", "fact.*", "choice.*", "gym.*"]
+}

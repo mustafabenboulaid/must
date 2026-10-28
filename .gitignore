@@ -1,0 +1,15 @@
+# Unreal
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+.vs/
+*.sln
+*.VC.db
+*.opensdf
+*.sdf
+*.suo
+# Standalone logic-test build
+Build/
+# Workspace tooling
+.hoplite/

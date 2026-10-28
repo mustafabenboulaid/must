@@ -1,0 +1,272 @@
+{
+  "schema": 1,
+  "id": "ch1_mb_first_november",
+  "chapter": "ch1_aures",
+  "title": {
+    "ar": "الأول من نوفمبر",
+    "en": "The First of November"
+  },
+  "design": {
+    "visibleGoal": "تنفيذ مهمة الفوج المختار في البلدة ثم الالتحاق بنقطة التجمع قبل الفجر.",
+    "dramaticGoal": "إظهار أن العمليات بدأت في مناطق متعددة لا في موقع واحد، بموارد قليلة.",
+    "obstacle": "سلاح نادر، تنسيق بين ثلاثة أفواج، ووقت ضيق.",
+    "decision": "اختيار الفوج (الدرك، محطة الكهرباء، الشرطة).",
+    "consequence": "تتغير الموارد والشك في المنطقة وحالة الشبكة.",
+    "transition": "الانسحاب نحو الجبل."
+  },
+  "timeline": {
+    "from": "1954-10-31",
+    "to": "1954-11-01",
+    "place": "town_composite",
+    "characters": [
+      "ben_boulaid",
+      "fic_aures_fighter_01",
+      "fic_aures_fighter_02",
+      "fic_aures_fighter_03"
+    ]
+  },
+  "startBeat": "briefing",
+  "lines": [
+    {
+      "id": "mb_bb_01",
+      "speaker": "ben_boulaid",
+      "lang": "ar-dz",
+      "text": "يا الخاوة… الليلة ماشي كيما الليالي. اليوم يوم تاريخي، يوم تقرير المصير.",
+      "dramatized": true
+    },
+    {
+      "id": "mb_bb_02",
+      "speaker": "ben_boulaid",
+      "lang": "ar-dz",
+      "text": "في نفس الساعة، الجزائر كاملة تنوض: خمس مناطق، من الأوراس حتى وهران.",
+      "dramatized": true
+    },
+    {
+      "id": "mb_bb_03",
+      "speaker": "ben_boulaid",
+      "lang": "ar-dz",
+      "text": "واحنا هنا، في الأوراس، المنطقة الأولى. علينا الحمل الكبير.",
+      "dramatized": true
+    },
+    {
+      "id": "mb_bb_04",
+      "speaker": "ben_boulaid",
+      "lang": "ar-dz",
+      "text": "الهدف: البلدة. نقسمو روحنا على ثلاث أفواج، وكل فوج يعرف خدمتو.",
+      "dramatized": true
+    },
+    {
+      "id": "mb_bb_05",
+      "speaker": "ben_boulaid",
+      "lang": "ar-dz",
+      "text": "الفوج الأول: مركز الدرك. تدخلو، تحكمو البلاصة، وتغنمو السلاح.",
+      "dramatized": true
+    },
+    {
+      "id": "mb_bb_06",
+      "speaker": "ben_boulaid",
+      "lang": "ar-dz",
+      "text": "الفوج الثاني: محطة الكهرباء. تطفيو الضو على البلدة… الظلام يكون معانا.",
+      "dramatized": true
+    },
+    {
+      "id": "mb_bb_07",
+      "speaker": "ben_boulaid",
+      "lang": "ar-dz",
+      "text": "الفوج الثالث: مركز البوليس. تشعلو الاشتباك وتشغلوهم، باش ما يجيوش يعاونو الدرك.",
+      "dramatized": true
+    },
+    {
+      "id": "mb_bb_08",
+      "speaker": "ben_boulaid",
+      "lang": "ar-dz",
+      "text": "اللي يهمنا الليلة: السلاح والذخيرة. واش نغنموه الليلة، نقاتلو بيه غدوة.",
+      "dramatized": true
+    },
+    {
+      "id": "mb_bb_09",
+      "speaker": "ben_boulaid",
+      "lang": "ar-dz",
+      "text": "الساعة الصفر: نص الليل. وكيما تكمّلو، نتلاقاو هنا في الجبل قبل الفجر.",
+      "dramatized": true
+    },
+    {
+      "id": "mb_bb_10",
+      "speaker": "ben_boulaid",
+      "lang": "ar-dz",
+      "text": "ربي معانا. الله أكبر… اختار فوجك.",
+      "dramatized": true
+    },
+    {
+      "id": "mb_net_1",
+      "speaker": "narrator",
+      "lang": "ar",
+      "text": "(نص مؤقت) أخبار متقطعة عبر الشبكة: الأفواج الأخرى بدأت.",
+      "remote": true
+    }
+  ],
+  "beats": [
+    {
+      "id": "briefing",
+      "type": "dialogue",
+      "note": "ui/briefing/briefing.html; Ben Boulaïd's lines are dramatized (brief §3).",
+      "lines": [
+        "mb_bb_01",
+        "mb_bb_02",
+        "mb_bb_03",
+        "mb_bb_04",
+        "mb_bb_05",
+        "mb_bb_06",
+        "mb_bb_07",
+        "mb_bb_08",
+        "mb_bb_09",
+        "mb_bb_10"
+      ],
+      "completeOn": "briefing.start_operation",
+      "next": "intercut"
+    },
+    {
+      "id": "intercut",
+      "type": "cinematic",
+      "note": "Intercut opening across several zones (user's Level Sequence).",
+      "asset": "",
+      "next": "choose_group"
+    },
+    {
+      "id": "choose_group",
+      "type": "branch",
+      "branches": [
+        {
+          "if": [
+            {
+              "key": "choice.group_gendarmerie",
+              "op": "set"
+            }
+          ],
+          "next": "g1_approach"
+        },
+        {
+          "if": [
+            {
+              "key": "choice.group_power",
+              "op": "set"
+            }
+          ],
+          "next": "g2_approach"
+        }
+      ],
+      "else": "g3_approach"
+    },
+    {
+      "id": "g1_approach",
+      "type": "objective",
+      "text": {
+        "ar": "الفوج الأول: اقترب من مركز الدرك"
+      },
+      "completeOn": "mb.g1.in_position",
+      "next": "g1_action"
+    },
+    {
+      "id": "g1_action",
+      "type": "objective",
+      "text": {
+        "ar": "السيطرة على مخزن السلاح"
+      },
+      "completeOn": "mb.g1.armory_secured",
+      "onComplete": [
+        {
+          "op": "add",
+          "key": "supplies.rifles",
+          "value": 3
+        },
+        {
+          "op": "add",
+          "key": "suspicion.aures",
+          "value": 20
+        }
+      ],
+      "next": "cp_after_action"
+    },
+    {
+      "id": "g2_approach",
+      "type": "objective",
+      "text": {
+        "ar": "الفوج الثاني: اقترب من محطة الكهرباء"
+      },
+      "completeOn": "mb.g2.in_position",
+      "next": "g2_action"
+    },
+    {
+      "id": "g2_action",
+      "type": "objective",
+      "text": {
+        "ar": "إطفاء البلدة"
+      },
+      "completeOn": "mb.g2.power_cut",
+      "onComplete": [
+        {
+          "op": "setFlag",
+          "key": "info.town_dark"
+        },
+        {
+          "op": "add",
+          "key": "suspicion.aures",
+          "value": 15
+        }
+      ],
+      "next": "cp_after_action"
+    },
+    {
+      "id": "g3_approach",
+      "type": "objective",
+      "text": {
+        "ar": "الفوج الثالث: اقترب من مركز الشرطة"
+      },
+      "completeOn": "mb.g3.in_position",
+      "next": "g3_action"
+    },
+    {
+      "id": "g3_action",
+      "type": "objective",
+      "text": {
+        "ar": "تثبيت الشرطة حتى لا تنجد الدرك"
+      },
+      "completeOn": "mb.g3.police_pinned",
+      "onComplete": [
+        {
+          "op": "add",
+          "key": "suspicion.aures",
+          "value": 25
+        }
+      ],
+      "next": "cp_after_action"
+    },
+    {
+      "id": "cp_after_action",
+      "type": "checkpoint",
+      "next": "network_reports"
+    },
+    {
+      "id": "network_reports",
+      "type": "dialogue",
+      "lines": [
+        "mb_net_1"
+      ],
+      "next": "rally"
+    },
+    {
+      "id": "rally",
+      "type": "objective",
+      "text": {
+        "ar": "الالتحاق بنقطة التجمع في الجبل قبل الفجر"
+      },
+      "completeOn": "mb.rally_reached",
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "outcome": "success"
+    }
+  ]
+}
